@@ -1,29 +1,23 @@
-import { Document } from '../types/document';
-
-let mockDocuments: Record<number, Document[]> = {
-  1: [
-    { id: 101, name: 'Employee_Handbook.pdf', createdAt: new Date().toISOString() },
-    { id: 102, name: 'Company_Policies.docx', createdAt: new Date().toISOString() }
-  ]
-};
+import { documentsApi, DocumentResponse as Document } from '../api/documents';
 
 export const documentService = {
+  //uploade file to an org
   uploadDocument: async (organizationId: number, file: File): Promise<Document> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const newDoc = { id: Date.now(), name: file.name, createdAt: new Date().toISOString() };
-        if (!mockDocuments[organizationId]) {
-          mockDocuments[organizationId] = [];
-        }
-        mockDocuments[organizationId].push(newDoc);
-        resolve(newDoc);
-      }, 1500);
-    });
+    return await documentsApi.upload(organizationId, file);
   },
 
+  //get document of an org
   getDocuments: async (organizationId: number): Promise<Document[]> => {
-    return new Promise((resolve) => {
-      setTimeout(() => resolve(mockDocuments[organizationId] || []), 500);
-    });
+    return await documentsApi.getAll(organizationId);
+  },
+
+  //delete file from an org
+  deleteDocument: async (organizationId: number, documentId: number): Promise<void> => {
+    return await documentsApi.delete(organizationId, documentId);
+  },
+
+  //update filename of a document
+  updateDocument: async (organizationId: number, documentId: number, fileName: string): Promise<Document> => {
+    return await documentsApi.update(organizationId, documentId, { file_name: fileName });
   },
 };

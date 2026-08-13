@@ -14,7 +14,7 @@ import Signup from '../pages/Signup/Signup';
 import Dashboard from '../pages/Dashboard/Dashboard';
 import Organizations from '../pages/Organizations/Organizations';
 import CreateOrganization from '../pages/Organizations/CreateOrganization';
-import OrganizationDetails from '../pages/Organizations/OrganizationDetails';
+
 import Documents from '../pages/Documents/Documents';
 import UploadDocuments from '../pages/Documents/UploadDocuments';
 import Chat from '../pages/Chat/Chat';
@@ -36,7 +36,7 @@ const AppRoutes = () => {
             <Route path="/" element={<Dashboard />} />
             <Route path="/organizations" element={<Organizations />} />
             <Route path="/organizations/new" element={<CreateOrganization />} />
-            <Route path="/organizations/:id" element={<OrganizationDetails />} />
+
             <Route path="/documents" element={<Documents />} />
             <Route path="/documents/upload" element={<UploadDocuments />} />
             <Route path="/chat" element={<Chat />} />

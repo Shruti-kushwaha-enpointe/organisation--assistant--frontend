@@ -1,25 +1,25 @@
 import { Organization } from '../types/organization';
-
-// Mock data to simulate backend until APIs are ready
-let mockOrganizations: Organization[] = [
-  { id: 1, name: 'Acme Corporation' },
-  { id: 2, name: 'Tech Solutions Inc.' },
-];
+import { organizationsApi } from '../api/organizations';
 
 export const organizationService = {
+
+  //create new org name 
   createOrganization: async (name: string): Promise<Organization> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const newOrg = { id: Date.now(), name };
-        mockOrganizations.push(newOrg);
-        resolve(newOrg);
-      }, 800);
-    });
+    return await organizationsApi.create({ name });
+  },
+ 
+  //read/list all org names
+  getOrganizations: async (): Promise<Organization[]> => {
+    return await organizationsApi.getAll();
   },
 
-  getOrganizations: async (): Promise<Organization[]> => {
-    return new Promise((resolve) => {
-      setTimeout(() => resolve([...mockOrganizations]), 500);
-    });
+  //update org name
+  updateOrganization: async (id: number, name: string): Promise<Organization> => {
+    return await organizationsApi.update(id, { name });
+  },
+
+  //delete an org 
+  deleteOrganization: async (id: number): Promise<void> => {
+    return await organizationsApi.delete(id);
   },
 };

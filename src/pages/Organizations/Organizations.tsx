@@ -1,13 +1,45 @@
 import { Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { Building2, Plus } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Building2, Plus, Edit2, Trash2 } from 'lucide-react';
 import { organizationService } from '../../services/organization.service';
 
 const Organizations = () => {
+  const queryClient = useQueryClient();
+
   const { data: organizations, isLoading } = useQuery({
     queryKey: ['organizations'],
     queryFn: organizationService.getOrganizations,
   });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => organizationService.deleteOrganization(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['organizations'] });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, name }: { id: number; name: string }) => 
+      organizationService.updateOrganization(id, name),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['organizations'] });
+    },
+  });
+
+  const handleDelete = (e: React.MouseEvent, id: number) => {
+    e.preventDefault(); // Prevent navigating to the organization
+    if (window.confirm('Are you sure you want to delete this organization? All documents inside will be lost!')) {
+      deleteMutation.mutate(id);
+    }
+  };
+
+  const handleUpdate = (e: React.MouseEvent, id: number, currentName: string) => {
+    e.preventDefault(); // Prevent navigating to the organization
+    const newName = window.prompt('Enter new organization name:', currentName);
+    if (newName && newName.trim() !== '' && newName !== currentName) {
+      updateMutation.mutate({ id, name: newName.trim() });
+    }
+  };
 
   return (
     <div className="max-w-[1000px] my-16 mx-auto p-12 min-h-[500px] bg-cards border border-border rounded-[24px] shadow-sm">
@@ -39,9 +71,26 @@ const Organizations = () => {
                     <div className="inline-flex items-center px-2.5 py-1 border border-border rounded-full bg-background text-xs font-medium text-text-muted mt-2">ID: {org.id}</div>
                   </div>
                 </div>
-                <Link to={`/organizations/${org.id}`} className="inline-flex items-center mt-auto text-primary font-medium text-sm transition-all hover:underline">
-                  View Organization &rarr;
-                </Link>
+                <div className="flex items-center justify-end mt-auto pt-4 border-t border-border">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={(e) => handleUpdate(e, org.id, org.name)}
+                      disabled={updateMutation.isPending}
+                      className="text-text-muted hover:text-blue-500 transition-colors p-2 rounded-full hover:bg-blue-50 disabled:opacity-50"
+                      title="Rename organization"
+                    >
+                      <Edit2 size={18} />
+                    </button>
+                    <button
+                      onClick={(e) => handleDelete(e, org.id)}
+                      disabled={deleteMutation.isPending}
+                      className="text-text-muted hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-50 disabled:opacity-50"
+                      title="Delete organization"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                </div>
               </div>
             ))
           ) : (

@@ -4,6 +4,7 @@ import { Send, User, Bot, FileText, MessageSquare } from 'lucide-react';
 import { organizationService } from '../../services/organization.service';
 import { chatService } from '../../services/chat.service';
 import { ChatResponse } from '../../types/chat';
+import ReactMarkdown from 'react-markdown';
 
 interface Message {
   id: string;
@@ -91,12 +92,12 @@ const Chat = () => {
   };
 
   return (
-    <div className="flex h-[calc(100vh-60px)] bg-background overflow-hidden">
+    <div className="flex h-[calc(100vh-134px)] bg-background overflow-hidden border border-border rounded-xl shadow-sm">
       {/* Sidebar for context selection */}
       <div className="w-[280px] bg-cards border-r border-border flex flex-col">
         <div className="p-6 border-b border-border">
           <div className="font-semibold text-text-main mb-2">Chat Context</div>
-          <select 
+          <select
             className="w-full p-2 border border-border rounded-md bg-background text-text-main"
             value={selectedOrgId}
             onChange={(e) => setSelectedOrgId(e.target.value === '' ? '' : Number(e.target.value))}
@@ -131,8 +132,34 @@ const Chat = () => {
                     {msg.role === 'user' ? <User size={20} /> : <Bot size={20} />}
                   </div>
                   <div className={`px-6 py-4 rounded-lg leading-relaxed ${msg.role === 'user' ? 'bg-primary text-white rounded-tr-sm' : 'bg-cards border border-border text-text-main rounded-tl-sm'}`}>
-                    <div style={{ whiteSpace: 'pre-wrap' }}>{msg.content}</div>
-                    
+                    {/* <div style={{ whiteSpace: 'pre-wrap' }}>{msg.content}</div> */}
+                    {msg.role === 'user' ? (
+
+                      <div style={{ whiteSpace: 'pre-wrap' }}>{msg.content}</div>
+                    ) : (
+                      <div className="w-full break-words">
+                        <ReactMarkdown
+                          components={{
+                            // Headings
+                            h1: ({ node, ...props }) => <h1 className="text-2xl font-bold mt-4 mb-2 first:mt-0" {...props} />,
+                            h2: ({ node, ...props }) => <h2 className="text-xl font-bold mt-4 mb-2 first:mt-0" {...props} />,
+                            h3: ({ node, ...props }) => <h3 className="text-lg font-semibold mt-3 mb-2 first:mt-0" {...props} />,
+
+                            // Paragraphs & Text
+                            p: ({ node, ...props }) => <p className="mb-3 last:mb-0 leading-relaxed" {...props} />,
+                            strong: ({ node, ...props }) => <strong className="font-bold" {...props} />,
+
+                            // Lists
+                            ul: ({ node, ...props }) => <ul className="list-disc pl-6 mb-3 space-y-1" {...props} />,
+                            ol: ({ node, ...props }) => <ol className="list-decimal pl-6 mb-3 space-y-1" {...props} />,
+                            li: ({ node, ...props }) => <li {...props} />,
+                          }}
+                        >
+                          {msg.content}
+                        </ReactMarkdown>
+                      </div>
+                    )}
+
                     {msg.sources && msg.sources.length > 0 && (
                       <div className="mt-4 pt-4 border-t border-dashed border-border text-sm">
                         <div className="font-semibold mb-2 text-text-muted">Sources:</div>
@@ -149,7 +176,7 @@ const Chat = () => {
               </div>
             ))
           )}
-          
+
           {chatMutation.isPending && (
             <div className={`flex w-full justify-start`}>
               <div className={`max-w-[80%] flex gap-4`}>
@@ -166,7 +193,7 @@ const Chat = () => {
               </div>
             </div>
           )}
-          
+
           <div ref={messagesEndRef} />
         </div>
 
@@ -186,7 +213,7 @@ const Chat = () => {
               disabled={!selectedOrgId || chatMutation.isPending}
               rows={1}
             />
-            <button 
+            <button
               className="bg-primary text-white border-none w-11 h-11 rounded-md flex items-center justify-center cursor-pointer transition-colors shrink-0 ml-2 hover:bg-blue-700 disabled:bg-border disabled:text-text-muted disabled:cursor-not-allowed"
               onClick={handleSend}
               disabled={!input.trim() || !selectedOrgId || chatMutation.isPending}

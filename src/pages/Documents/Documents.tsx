@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { FileText, Upload, Filter, Loader2 } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { FileText, Upload, Filter, Loader2, Trash2, Edit2 } from 'lucide-react';
 import { organizationService } from '../../services/organization.service';
 import { documentService } from '../../services/document.service';
 
 const Documents = () => {
   const [selectedOrgId, setSelectedOrgId] = useState<number | ''>('');
+  const queryClient = useQueryClient();
 
   const { data: organizations } = useQuery({
     queryKey: ['organizations'],
@@ -25,6 +26,39 @@ const Documents = () => {
     queryFn: () => selectedOrgId ? documentService.getDocuments(selectedOrgId as number) : Promise.resolve([]),
     enabled: selectedOrgId !== '',
   });
+
+  const deleteMutation = useMutation({
+    mutationFn: ({ orgId, docId }: { orgId: number; docId: number }) => 
+      documentService.deleteDocument(orgId, docId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['documents', selectedOrgId] });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ orgId, docId, fileName }: { orgId: number; docId: number, fileName: string }) => 
+      documentService.updateDocument(orgId, docId, fileName),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['documents', selectedOrgId] });
+    },
+  });
+
+  const handleDelete = (docId: number) => {
+    if (window.confirm('Are you sure you want to delete this document?')) {
+      if (selectedOrgId) {
+        deleteMutation.mutate({ orgId: selectedOrgId as number, docId });
+      }
+    }
+  };
+
+  const handleUpdate = (docId: number, currentName: string) => {
+    const newName = window.prompt('Enter new filename:', currentName);
+    if (newName && newName.trim() !== '' && newName !== currentName) {
+      if (selectedOrgId) {
+        updateMutation.mutate({ orgId: selectedOrgId as number, docId, fileName: newName.trim() });
+      }
+    }
+  };
 
   return (
     <div className="max-w-[1200px] mx-auto p-8">
@@ -57,6 +91,7 @@ const Documents = () => {
               <th className="bg-black/5 py-4 px-6 text-left font-semibold text-sm text-text-muted border-b border-border">File Name</th>
               <th className="bg-black/5 py-4 px-6 text-left font-semibold text-sm text-text-muted border-b border-border">Upload Date</th>
               <th className="bg-black/5 py-4 px-6 text-left font-semibold text-sm text-text-muted border-b border-border">Status</th>
+              <th className="bg-black/5 py-4 px-6 text-right font-semibold text-sm text-text-muted border-b border-border">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -75,16 +110,36 @@ const Documents = () => {
                   <td className="py-4 px-6 border-b border-border align-middle">
                     <div className="flex items-center gap-4">
                       <FileText className="text-accent" size={20} />
-                      <span className="font-medium text-text-main">{doc.name}</span>
+                      <span className="font-medium text-text-main">{doc.file_name}</span>
                     </div>
                   </td>
                   <td className="py-4 px-6 border-b border-border align-middle">
                     <span className="text-text-muted text-sm">
-                      {doc.createdAt ? new Date(doc.createdAt).toLocaleDateString() : 'N/A'}
+                      {doc.created_at ? new Date(doc.created_at).toLocaleDateString() : 'N/A'}
                     </span>
                   </td>
                   <td className="py-4 px-6 border-b border-border align-middle">
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-success/10 text-success">Indexed</span>
+                  </td>
+                  <td className="py-4 px-6 border-b border-border align-middle text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => handleUpdate(doc.id, doc.file_name)}
+                        disabled={updateMutation.isPending}
+                        className="text-text-muted hover:text-blue-500 transition-colors p-2 rounded-full hover:bg-blue-50 disabled:opacity-50"
+                        title="Rename document"
+                      >
+                        <Edit2 size={18} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(doc.id)}
+                        disabled={deleteMutation.isPending}
+                        className="text-text-muted hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-50 disabled:opacity-50"
+                        title="Delete document"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))

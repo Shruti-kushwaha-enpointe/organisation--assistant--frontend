@@ -1,11 +1,10 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Building2, FileText, MessageSquare, Plus, Upload } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { organizationService } from '../../services/organization.service';
 import { documentService } from '../../services/document.service';
-import { chatService } from '../../services/chat.service';
+// import { chatService } from '../../services/chat.service';
 
 const Dashboard = () => {
   const { user } = useAuthStore();
@@ -16,18 +15,19 @@ const Dashboard = () => {
   });
 
   const { data: documents, isLoading: docsLoading } = useQuery({
-    queryKey: ['documents'],
-    queryFn: () => documentService.getDocuments(1), // Mock org id
+    queryKey: ['documents', organizations?.[0]?.id],
+    queryFn: () => documentService.getDocuments(organizations![0].id),
+    enabled: !!organizations && organizations.length > 0,
   });
 
-  const { data: conversations, isLoading: chatsLoading } = useQuery({
-    queryKey: ['conversations'],
-    queryFn: () => chatService.askQuestion(1, ''), // Mock
-  });
+  // We don't have a 'list conversations' endpoint yet, so we'll mock this for now
+  // to prevent it from constantly hitting the POST /chat endpoint with empty data.
+  const chatsLoading = false;
+  // const conversations = [];
 
   const totalOrgs = organizations?.length || 0;
   const totalDocs = documents?.length || 0;
-  const unreadMessages = 5; // Mock since chat structure changed
+  // const unreadMessages = 5; // Mock since chat structure changed
 
   const isLoading = orgsLoading || docsLoading || chatsLoading;
 
@@ -36,7 +36,7 @@ const Dashboard = () => {
       {/* Welcome Banner */}
       <div className="bg-gradient-to-br from-primary to-accent rounded-2xl p-12 text-white shadow-md relative overflow-hidden">
         <h1 className="text-3xl font-bold mb-2 text-white relative z-10">Welcome back, {user?.name || 'User'}!</h1>
-        <p className="text-lg text-white/80 m-0 relative z-10">Here is an overview of your knowledge base.</p>
+        <p className="text-lg text-white/80 m-0 relative z-10">Here is an overview of your knowledge base!!!.</p>
       </div>
 
       {/* Stats Overview */}
@@ -70,15 +70,7 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="bg-cards border border-border rounded-lg p-6 flex items-start gap-4 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md">
-              <div className="w-12 h-12 rounded-md flex items-center justify-center shrink-0 bg-success/10 text-success">
-                <MessageSquare size={24} />
-              </div>
-              <div className="flex-1">
-                <div className="text-3xl font-bold text-text-main leading-none mb-1">12</div>
-                <div className="text-sm text-text-muted">AI Queries</div>
-              </div>
-            </div>
+
           </div>
         )}
       </div>
@@ -111,7 +103,7 @@ const Dashboard = () => {
           </div>
           <div className="flex flex-col">
             {docsLoading ? (
-               <div className="text-center text-text-muted py-6 text-sm">Loading...</div>
+              <div className="text-center text-text-muted py-6 text-sm">Loading...</div>
             ) : documents && documents.length > 0 ? (
               documents.slice(0, 4).map(doc => (
                 <div key={doc.id} className="flex items-center gap-4 py-4 border-b border-border last:border-b-0">
@@ -119,9 +111,9 @@ const Dashboard = () => {
                     <FileText size={20} />
                   </div>
                   <div className="flex-1">
-                    <div className="font-medium text-text-main mb-[2px]">{doc.name}</div>
+                    <div className="font-medium text-text-main mb-[2px]">{doc.file_name}</div>
                     <div className="text-xs text-text-muted">
-                      Uploaded {doc.createdAt ? new Date(doc.createdAt).toLocaleDateString() : 'recently'}
+                      Uploaded {doc.created_at ? new Date(doc.created_at).toLocaleDateString() : 'recently'}
                     </div>
                   </div>
                 </div>
@@ -139,7 +131,7 @@ const Dashboard = () => {
           </div>
           <div className="flex flex-col">
             {orgsLoading ? (
-               <div className="text-center text-text-muted py-6 text-sm">Loading...</div>
+              <div className="text-center text-text-muted py-6 text-sm">Loading...</div>
             ) : organizations && organizations.length > 0 ? (
               organizations.slice(0, 4).map(org => (
                 <div key={org.id} className="flex items-center gap-4 py-4 border-b border-border last:border-b-0">
