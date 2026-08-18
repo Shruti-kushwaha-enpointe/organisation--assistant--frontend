@@ -4,7 +4,6 @@ import { Building2, FileText, MessageSquare, Plus, Upload } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { organizationService } from '../../services/organization.service';
 import { documentService } from '../../services/document.service';
-// import { chatService } from '../../services/chat.service';
 
 const Dashboard = () => {
   const { user } = useAuthStore();
@@ -20,16 +19,10 @@ const Dashboard = () => {
     enabled: !!organizations && organizations.length > 0,
   });
 
-  // We don't have a 'list conversations' endpoint yet, so we'll mock this for now
-  // to prevent it from constantly hitting the POST /chat endpoint with empty data.
-  const chatsLoading = false;
-  // const conversations = [];
-
   const totalOrgs = organizations?.length || 0;
   const totalDocs = documents?.length || 0;
-  // const unreadMessages = 5; // Mock since chat structure changed
 
-  const isLoading = orgsLoading || docsLoading || chatsLoading;
+  const isLoading = orgsLoading || docsLoading;
 
   return (
     <div className="max-w-[1200px] mx-auto p-8 flex flex-col gap-8">
@@ -69,8 +62,6 @@ const Dashboard = () => {
                 <div className="text-sm text-text-muted">Indexed Documents</div>
               </div>
             </div>
-
-
           </div>
         )}
       </div>

@@ -6,7 +6,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   isAuthenticated: false,
   isLoading: false,
 
-  login: async (email: string) => {
+  login: async (email: string, _password: string) => {
     set({ isLoading: true });
     
     // Simulate API call delay
@@ -24,6 +24,26 @@ export const useAuthStore = create<AuthState>((set) => ({
       user: mockUser, 
       isAuthenticated: true, 
       isLoading: false 
+    });
+  },
+
+  register: async (name: string, email: string, _password: string) => {
+    set({ isLoading: true });
+
+    // Simulate API call delay
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+
+    const mockUser: User = {
+      id: `usr_${Date.now()}`,
+      email,
+      name,
+      role: 'admin',
+    };
+
+    set({
+      user: mockUser,
+      isAuthenticated: true,
+      isLoading: false,
     });
   },
 

@@ -20,7 +20,7 @@ const Signup: React.FC = () => {
 
   const onSubmit = async (data: SignupFormData) => {
     try {
-      await registerUser(data.name, data.email);
+      await registerUser(data.name, data.email, data.password);
       navigate('/');
     } catch (error) {
       console.error('Registration failed:', error);
