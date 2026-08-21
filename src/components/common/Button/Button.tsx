@@ -19,7 +19,7 @@ const sizeStyles = {
 };
 
 const variantStyles = {
-  primary: "bg-primary text-white shadow-sm hover:bg-blue-700",
+  primary: "bg-primary text-white shadow-sm hover:bg-emerald-700",
   secondary: "bg-white text-text-main border-border shadow-sm hover:bg-background",
   ghost: "bg-transparent text-text-main hover:bg-border",
   danger: "bg-error text-white hover:bg-red-700",

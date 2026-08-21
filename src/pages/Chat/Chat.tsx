@@ -6,6 +6,8 @@ import { chatService } from '../../services/chat.service';
 import { ChatResponse } from '../../api/chat';
 import ReactMarkdown from 'react-markdown';
 import Spinner from '../../components/common/Spinner/Spinner';
+import { useAuthStore } from '../../store/authStore';
+import { getVisibleOrganizations } from '../../utils/rbac';
 
 interface Message {
   id: string;
@@ -17,7 +19,7 @@ interface Message {
 const Chat = () => {
   const [selectedOrgId, setSelectedOrgId] = useState<number | ''>('');
   const [input, setInput] = useState('');
-  
+
   // State for the ongoing session vs selected historical item
   const [currentSessionMessages, setCurrentSessionMessages] = useState<Message[]>([]);
   const [selectedHistoryId, setSelectedHistoryId] = useState<string | number | null>(null);
@@ -26,22 +28,26 @@ const Chat = () => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const queryClient = useQueryClient();
+  const { user } = useAuthStore();
+
   const { data: organizations } = useQuery({
     queryKey: ['organizations'],
     queryFn: organizationService.getOrganizations,
   });
 
+  const visibleOrganizations = getVisibleOrganizations(organizations, user);
+
   const { data: historyData, isLoading: isHistoryLoading } = useQuery({
-    queryKey: ['chatHistory', selectedOrgId],
-    queryFn: () => chatService.getHistory(selectedOrgId as number),
-    enabled: !!selectedOrgId,
+    queryKey: ['chatHistory', selectedOrgId, user?.email],
+    queryFn: () => chatService.getHistory(selectedOrgId as number, user?.email),
+    enabled: !!selectedOrgId && !!user?.email,
   });
 
   useEffect(() => {
-    if (organizations && organizations.length > 0 && selectedOrgId === '') {
-      setSelectedOrgId(organizations[0].id);
+    if (visibleOrganizations && visibleOrganizations.length > 0 && selectedOrgId === '') {
+      setSelectedOrgId(visibleOrganizations[0].id);
     }
-  }, [organizations, selectedOrgId]);
+  }, [visibleOrganizations, selectedOrgId]);
 
   // Clear messages when changing organization
   useEffect(() => {
@@ -63,19 +69,53 @@ const Chat = () => {
 
   const chatMutation = useMutation({
     mutationFn: async (question: string) => {
-      return chatService.askQuestion(selectedOrgId as number, question);
+      let aiMessageId: string | null = null;
+      let fullAnswer = '';
+      let finalSources: ChatResponse['sources'] | undefined = undefined;
+
+      await chatService.askQuestionStream(
+        selectedOrgId as number,
+        question,
+        (chunk) => {
+          if (chunk.text) fullAnswer += chunk.text;
+          if (chunk.sources) finalSources = chunk.sources;
+
+          if (!aiMessageId) {
+            aiMessageId = Date.now().toString();
+            setCurrentSessionMessages((prev) => [
+              ...prev,
+              {
+                id: aiMessageId!,
+                role: 'ai',
+                content: chunk.text || '',
+                sources: chunk.sources
+              }
+            ]);
+          } else {
+            setCurrentSessionMessages((prev) =>
+              prev.map(msg =>
+                msg.id === aiMessageId
+                  ? {
+                    ...msg,
+                    content: chunk.text ? msg.content + chunk.text : msg.content,
+                    sources: chunk.sources ? chunk.sources : msg.sources
+                  }
+                  : msg
+              )
+            );
+          }
+        }
+      );
+
+      // Save to local history when stream finishes
+      if (user?.email && selectedOrgId) {
+        chatService.saveLocalHistory(selectedOrgId as number, user.email, question, fullAnswer, finalSources);
+      }
+
+      return true;
     },
-    onSuccess: (data) => {
-      setCurrentSessionMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now().toString(),
-          role: 'ai',
-          content: data.answer,
-          sources: data.sources,
-        },
-      ]);
-      queryClient.invalidateQueries({ queryKey: ['chatHistory', selectedOrgId] });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['chatHistory', selectedOrgId, user?.email] });
     },
     onError: () => {
       setCurrentSessionMessages((prev) => [
@@ -150,27 +190,27 @@ const Chat = () => {
             onChange={(e) => setSelectedOrgId(e.target.value === '' ? '' : Number(e.target.value))}
           >
             <option value="" disabled>Select Organization</option>
-            {organizations?.map((org) => (
+            {visibleOrganizations?.map((org) => (
               <option key={org.id} value={org.id}>{org.name}</option>
             ))}
           </select>
-          
-          <button 
+
+          <button
             onClick={startNewChat}
-            className="w-full flex items-center justify-center gap-2 bg-primary text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
+            className="w-full flex items-center justify-center gap-2 bg-primary text-white py-2 px-4 rounded-md hover:bg-emerald-700 transition-colors"
           >
             <Plus size={18} />
             <span>New Chat</span>
           </button>
         </div>
-        
+
         <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-2">
           {selectedOrgId && (
-            <div className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-2 px-2 mt-2">
+            <div className="text-xs font- old text-text-muted uppercase tracking-wider mb-2 px-2 mt-2">
               Recent Chats
             </div>
           )}
-          
+
           {isHistoryLoading && selectedOrgId ? (
             <div className="flex justify-center p-4">
               <Spinner />
@@ -234,7 +274,7 @@ const Chat = () => {
                       </div>
                     )}
 
-                    {msg.sources && msg.sources.length > 0 && (
+                    {msg.sources && msg.sources.length > 0 && !(chatMutation.isPending && msg.id === displayMessages[displayMessages.length - 1].id) && (
                       <div className="mt-4 pt-4 border-t border-dashed border-border text-sm">
                         <div className="font-semibold mb-2 text-text-muted">Sources:</div>
                         {msg.sources.map((src, idx) => (
@@ -251,17 +291,16 @@ const Chat = () => {
             ))
           )}
 
-          {chatMutation.isPending && (
+          {chatMutation.isPending && displayMessages[displayMessages.length - 1]?.role === 'user' && (
             <div className={`flex w-full justify-start`}>
               <div className={`max-w-[80%] flex gap-4`}>
                 <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-white bg-success`}>
                   <Bot size={20} />
                 </div>
                 <div className={`px-6 py-4 rounded-lg leading-relaxed bg-cards border border-border text-text-main rounded-tl-sm`}>
-                  <div className="flex items-center gap-1 py-1">
-                    <div className="w-1.5 h-1.5 bg-text-muted rounded-full animate-bounce" style={{ animationDelay: '-0.32s' }}></div>
-                    <div className="w-1.5 h-1.5 bg-text-muted rounded-full animate-bounce" style={{ animationDelay: '-0.16s' }}></div>
-                    <div className="w-1.5 h-1.5 bg-text-muted rounded-full animate-bounce"></div>
+                  <div className="flex items-center py-1">
+                    <Spinner size="sm" variant="primary" />
+                    <span className="text-sm font-medium text-text-muted ml-3 animate-pulse">Thinking...</span>
                   </div>
                 </div>
               </div>
@@ -272,7 +311,7 @@ const Chat = () => {
         </div>
 
         {/* Input Area */}
-         <div className="p-6 bg-background border-t border-border">
+        <div className="p-6 bg-background border-t border-border">
           <div className="max-w-[800px] mx-auto relative flex items-end bg-cards border border-border rounded-lg p-2 shadow-sm focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10">
             <textarea
               ref={textareaRef}
@@ -288,11 +327,15 @@ const Chat = () => {
               rows={1}
             />
             <button
-              className="bg-primary text-white border-none w-11 h-11 rounded-md flex items-center justify-center cursor-pointer transition-colors shrink-0 ml-2 hover:bg-blue-700 disabled:bg-border disabled:text-text-muted disabled:cursor-not-allowed"
+              className="bg-primary text-white border-none w-11 h-11 rounded-md flex items-center justify-center cursor-pointer transition-colors shrink-0 ml-2 hover:bg-emerald-700 disabled:bg-border disabled:text-text-muted disabled:cursor-not-allowed"
               onClick={handleSend}
               disabled={!input.trim() || !selectedOrgId || chatMutation.isPending}
             >
-              <Send size={20} />
+              {chatMutation.isPending ? (
+                <Spinner size="sm" variant="white" />
+              ) : (
+                <Send size={20} />
+              )}
             </button>
           </div>
         </div>

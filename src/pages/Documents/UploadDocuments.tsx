@@ -9,7 +9,7 @@ const UploadDocuments = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const [selectedOrg, setSelectedOrg] = useState<number | ''>('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +40,7 @@ const UploadDocuments = () => {
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       setSelectedFile(e.dataTransfer.files[0]);
       setError(null);
@@ -63,7 +63,7 @@ const UploadDocuments = () => {
       setError('Please select a file to upload.');
       return;
     }
-    
+
     uploadMutation.mutate({ orgId: Number(selectedOrg), file: selectedFile });
   };
 
@@ -85,7 +85,7 @@ const UploadDocuments = () => {
       <div className="bg-cards border border-border rounded-lg p-8 shadow-sm">
         <div className="flex flex-col gap-2 mb-8">
           <label className="font-medium text-text-main">Select Organization</label>
-          <select 
+          <select
             className="px-4 py-3 border border-border rounded-md text-base bg-background text-text-main transition-all focus:outline-none focus:border-primary focus:ring-[3px] focus:ring-primary/10"
             value={selectedOrg}
             onChange={(e) => {
@@ -94,7 +94,7 @@ const UploadDocuments = () => {
             }}
             disabled={orgsLoading}
           >
-            <option value="">-- Choose Organization --</option>
+            <option value="">Choose Organization</option>
             {organizations?.map((org) => (
               <option key={org.id} value={org.id}>{org.name}</option>
             ))}
@@ -102,8 +102,8 @@ const UploadDocuments = () => {
         </div>
 
         {!selectedFile ? (
-          <div 
-            className="border-2 border-dashed border-border rounded-lg p-12 flex flex-col items-center justify-center gap-4 cursor-pointer bg-background transition-all hover:border-primary hover:bg-blue-600/5"
+          <div
+            className="border-2 border-dashed border-border rounded-lg p-12 flex flex-col items-center justify-center gap-4 cursor-pointer bg-background transition-all hover:border-primary hover:bg-emerald-50"
             onDragOver={handleDragOver}
             onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
@@ -111,9 +111,9 @@ const UploadDocuments = () => {
             <Upload className="text-text-muted w-12 h-12" />
             <div className="text-lg font-medium text-text-main text-center">Click or drag file to this area to upload</div>
             <div className="text-sm text-text-muted text-center">Support for a single PDF or DOCX file</div>
-            <input 
-              type="file" 
-              ref={fileInputRef} 
+            <input
+              type="file"
+              ref={fileInputRef}
               className="hidden"
               accept=".pdf,.docx,.txt"
               onChange={handleFileChange}
@@ -129,8 +129,8 @@ const UploadDocuments = () => {
                   <div className="text-sm text-text-muted">{formatFileSize(selectedFile.size)}</div>
                 </div>
               </div>
-              <button 
-                className="bg-transparent border-none text-error cursor-pointer p-1 rounded-sm flex items-center justify-center transition-colors hover:bg-error/10" 
+              <button
+                className="bg-transparent border-none text-error cursor-pointer p-1 rounded-sm flex items-center justify-center transition-colors hover:bg-error/10"
                 onClick={() => setSelectedFile(null)}
                 disabled={uploadMutation.isPending}
               >
@@ -146,8 +146,8 @@ const UploadDocuments = () => {
           <Link to="/documents" className="bg-transparent text-text-main px-6 py-3 border border-border rounded-md font-medium text-base cursor-pointer no-underline transition-all hover:bg-border">
             Cancel
           </Link>
-          <button 
-            className="bg-primary text-white px-6 py-3 border-none rounded-md font-semibold text-base cursor-pointer transition-colors hover:bg-blue-700 disabled:opacity-70 disabled:cursor-not-allowed" 
+          <button
+            className="bg-primary text-white px-6 py-3 border-none rounded-md font-semibold text-base cursor-pointer transition-colors hover:bg-emerald-700 disabled:opacity-70 disabled:cursor-not-allowed"
             onClick={handleUpload}
             disabled={!selectedOrg || !selectedFile || uploadMutation.isPending}
           >

@@ -5,8 +5,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
 import AuthLayout from '../layouts/AuthLayout';
 
-// Routes
 import ProtectedRoute from './ProtectedRoute';
+import RoleProtectedRoute from './RoleProtectedRoute';
 
 // Pages
 import Login from '../pages/Login/Login';
@@ -35,11 +35,14 @@ const AppRoutes = () => {
           <Route element={<MainLayout />}>
             <Route path="/" element={<Dashboard />} />
             <Route path="/organizations" element={<Organizations />} />
-            <Route path="/organizations/new" element={<CreateOrganization />} />
-
             <Route path="/documents" element={<Documents />} />
-            <Route path="/documents/upload" element={<UploadDocuments />} />
             <Route path="/chat" element={<Chat />} />
+            
+            {/* Superadmin Only Routes */}
+            <Route element={<RoleProtectedRoute allowedRoles={['superadmin']} />}>
+              <Route path="/organizations/new" element={<CreateOrganization />} />
+              <Route path="/documents/upload" element={<UploadDocuments />} />
+            </Route>
           </Route>
         </Route>
 

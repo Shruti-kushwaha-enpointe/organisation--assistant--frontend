@@ -2,15 +2,15 @@
 @import "./variables.css";
 
 @theme {
-  --color-primary: #2563EB;
+  --color-primary: #059669;
   --color-background: #F8FAFC;
   --color-cards: #FFFFFF;
-  --color-accent: #7C3AED;
-  --color-success: #22C55E;
+  --color-accent: #3B82F6;
+  --color-success: #10B981;
   --color-error: #EF4444;
-  --color-text-main: #1E293B;
+  --color-text-main: #0F172A;
   --color-text-muted: #64748B;
-  --color-border: #E2E8F0;
+  --color-border: #F1F5F9;
 
   --font-sans: Inter, system-ui, sans-serif;
 
@@ -18,17 +18,30 @@
   --animate-slide-in: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 
   @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
   }
 
   @keyframes slideIn {
-    from { opacity: 0; transform: translateY(10px) scale(0.98); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
+    from {
+      opacity: 0;
+      transform: translateY(10px) scale(0.98);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
   }
 }
 
 @layer base {
+
   /* Scrollbar styling for a polished look */
   ::-webkit-scrollbar {
     width: 8px;
@@ -38,7 +51,7 @@
   ::-webkit-scrollbar-track {
     background: transparent;
   }
-                                                                                                                                                         
+
   ::-webkit-scrollbar-thumb {
     background: #CBD5E1;
     border-radius: 0.5rem;

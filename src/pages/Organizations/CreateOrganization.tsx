@@ -50,11 +50,11 @@ const CreateOrganization = () => {
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
           <div className="flex flex-col gap-2">
             <label className="font-medium text-text-main">Organization Name</label>
-            <input 
-              type="text" 
-              placeholder="e.g. Acme Corporation" 
+            <input
+              type="text"
+              placeholder="e.g. Acme Corporation"
               className={errors.name ? errorInputClass : defaultInputClass}
-              {...register('name')} 
+              {...register('name')}
             />
             {errors.name && <span className="text-sm text-error">{errors.name.message}</span>}
           </div>
@@ -65,9 +65,9 @@ const CreateOrganization = () => {
             <Link to="/organizations" className="bg-transparent text-text-main px-6 py-3 border border-border rounded-md font-medium text-base transition-all cursor-pointer hover:bg-border">
               Cancel
             </Link>
-            <button 
-              type="submit" 
-              className="bg-primary text-white px-6 py-3 border-none rounded-md font-semibold text-base flex justify-center items-center transition-colors cursor-pointer hover:bg-blue-700 disabled:opacity-70 disabled:cursor-not-allowed" 
+            <button
+              type="submit"
+              className="bg-primary text-white px-6 py-3 border-none rounded-md font-semibold text-base flex justify-center items-center transition-colors cursor-pointer hover:bg-emerald-700 disabled:opacity-70 disabled:cursor-not-allowed" 
               disabled={mutation.isPending}
             >
               {mutation.isPending ? 'Creating...' : 'Create Organization'}
